@@ -1,5 +1,7 @@
 # Energy Data Platform
 
+<img width="1402" height="786" alt="2026-05-04 00 50 50" src="https://github.com/user-attachments/assets/e104547a-bc7a-4f8f-804f-99031cc428f9" />
+
 A production-oriented data pipeline for collecting, validating, transforming, storing, and serving energy price data, centered around **OilPriceAPI** ingestion.
 
 The repository combines:
