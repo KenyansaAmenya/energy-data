@@ -4,7 +4,7 @@
 !flask_app
 !app
 !config
-!requirements.txt
+!requirements-vercel.txt
 !vercel.json
 
 # Exclude development and cache files
@@ -16,5 +16,9 @@ venv/
 .git/
 logs/
 airflow/
+dags/
 tests/
-pytest
+
+# Exclude Airflow completely
+**/airflow/**
+**/apache_airflow**
