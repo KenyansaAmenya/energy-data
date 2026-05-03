@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Energy Price Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #064e3b;
+            color: #34d399;
+        }
+
+        .badge-warning {
+            background: #78350f;
+            color: #fbbf24;
+        }
+
+        .metric {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #60a5fa;
+            margin: 0.5rem 0;
+        }
+
+        .metric-label {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.75rem;
+            color: #94a3b8;
+            font-weight: 600;
+            border-bottom: 1px solid #334155;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        tr:hover td {
+            background: #252f47;
+        }
+
+        .price-up {
+            color: #f87171;
+        }
+
+        .price-down {
+            color: #34d399;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+        }
+
+        .error {
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .refresh-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #2563eb;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            background: #1e293b;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            font-size: 0.875rem;
+        }
+
+        .status-label {
+            color: #94a3b8;
+            margin-right: 0.5rem;
+        }
+
+        .status-value {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🌍 Global Energy Price Dashboard</h1>
+            <p class="subtitle">Real-time monitoring of global fuel, electricity, and natural gas prices</p>
+        </header>
+
+        <div class="status-bar" id="statusBar">
+            <div class="status-item">
+                <span class="status-label">Last Updated:</span>
+                <span class="status-value" id="lastUpdated">Loading...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Data Quality:</span>
+                <span class="status-value" id="dataQuality">Loading...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Records (24h):</span>
+                <span class="status-value" id="records24h">Loading...</span>
+            </div>
+            <button class="refresh-btn" onclick="loadDashboard()">Refresh Data</button>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📊 24h Summary</span>
+                    <span class="badge badge-success">Live</span>
+                </div>
+                <div id="summaryContent">
+                    <div class="loading">Loading summary...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">⬆️ Top Increases</span>
+                    <span class="badge badge-warning">24h</span>
+                </div>
+                <div id="increasesContent">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">⬇️ Top Decreases</span>
+                    <span class="badge badge-success">24h</span>
+                </div>
+                <div id="decreasesContent">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🌟 Latest Prices</span>
+                    <span class="badge badge-success">Global</span>
+                </div>
+                <div id="pricesContent">
+                    <div class="loading">Loading prices...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                return { status: 'error', data: null, error: error.message };
+            }
+        }
+
+        function formatPrice(price, currency) {
+            if (price === null || price === undefined || price === '') return 'N/A';
+            const curr = currency || 'USD';
+            const num = parseFloat(price);
+            if (isNaN(num)) return 'N/A';
+            return `${curr} ${num.toFixed(3)}`;
+        }
+
+        function formatChange(change, percent) {
+            if (change === null || change === undefined) return '<span>-</span>';
+            const num = parseFloat(change);
+            if (isNaN(num)) return '<span>-</span>';
+            const sign = num > 0 ? '+' : '';
+            const colorClass = num > 0 ? 'price-up' : num < 0 ? 'price-down' : '';
+            const pctNum = percent !== null && percent !== undefined ? parseFloat(percent) : null;
+            const pctStr = !isNaN(pctNum) ? ` (${sign}${pctNum.toFixed(2)}%)` : '';
+            return `<span class="${colorClass}">${sign}${num.toFixed(4)}${pctStr}</span>`;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr === 'null' || dateStr === 'undefined') return 'N/A';
+            try {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return 'N/A';
+                return d.toLocaleString();
+            } catch {
+                return String(dateStr);
+            }
+        }
+
+        function safeGet(obj, path, defaultValue = '') {
+            if (!obj || typeof obj !== 'object') return defaultValue;
+            const keys = path.split('.');
+            let current = obj;
+            for (const key of keys) {
+                if (current === null || current === undefined) return defaultValue;
+                current = current[key];
+            }
+            return current !== null && current !== undefined ? current : defaultValue;
+        }
+
+        async function loadDashboard() {
+            const [report, changes, prices] = await Promise.all([
+                fetchData('/report'),
+                fetchData('/changes'),
+                fetchData('/prices?limit=10')
+            ]);
+
+            // Handle API errors
+            if (report.status === 'error' || !report.data) {
+                document.getElementById('summaryContent').innerHTML =
+                    `<div class="error">Failed to load report: ${report.error || 'Unknown error'}</div>`;
+                document.getElementById('lastUpdated').textContent = 'Error';
+                document.getElementById('dataQuality').textContent = 'Error';
+                document.getElementById('records24h').textContent = 'Error';
+                return;
+            }
+
+            const data = report.data || {};
+
+            // Update status bar
+            document.getElementById('lastUpdated').textContent = formatDate(data.generated_at);
+            document.getElementById('dataQuality').textContent =
+                `${((safeGet(data, 'data_quality.pass_rate', 0)) * 100).toFixed(1)}%`;
+            document.getElementById('records24h').textContent =
+                data.total_records_processed_24h !== null && data.total_records_processed_24h !== undefined
+                    ? data.total_records_processed_24h
+                    : 0;
+
+            // Summary
+            const summaryHtml = `
+                <div class="metric">${data.total_records_processed_24h !== null && data.total_records_processed_24h !== undefined ? data.total_records_processed_24h : 0}</div>
+                <div class="metric-label">Records Processed (24h)</div>
+                <div style="margin-top: 1rem;">
+                    <div class="metric-label">Quality Checks</div>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <div>
+                            <div class="metric" style="font-size: 1.5rem; color: #34d399;">
+                                ${safeGet(data, 'data_quality.passed_checks', 0)}
+                            </div>
+                            <div class="metric-label">Passed</div>
+                        </div>
+                        <div>
+                            <div class="metric" style="font-size: 1.5rem; color: #f87171;">
+                                ${safeGet(data, 'data_quality.failed_checks', 0)}
+                            </div>
+                            <div class="metric-label">Failed</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('summaryContent').innerHTML = summaryHtml;
+
+            // Top Increases
+            const increases = safeGet(changes, 'data.top_increases', []);
+            const increasesHtml = Array.isArray(increases) && increases.length ? `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Country</th>
+                                <th>Product</th>
+                                <th>Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${increases.map(item => `
+                                <tr>
+                                    <td>${item.country || 'N/A'}</td>
+                                    <td>${item.product_type || 'N/A'}</td>
+                                    <td class="price-up">${item.change_24h !== null && item.change_24h !== undefined ? '+' + parseFloat(item.change_24h).toFixed(4) : 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            ` : '<div class="loading">No increases in last 24h</div>';
+            document.getElementById('increasesContent').innerHTML = increasesHtml;
+
+            // Top Decreases
+            const decreases = safeGet(changes, 'data.top_decreases', []);
+            const decreasesHtml = Array.isArray(decreases) && decreases.length ? `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Country</th>
+                                <th>Product</th>
+                                <th>Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${decreases.map(item => `
+                                <tr>
+                                    <td>${item.country || 'N/A'}</td>
+                                    <td>${item.product_type || 'N/A'}</td>
+                                    <td class="price-down">${item.change_24h !== null && item.change_24h !== undefined ? parseFloat(item.change_24h).toFixed(4) : 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            ` : '<div class="loading">No decreases in last 24h</div>';
+            document.getElementById('decreasesContent').innerHTML = decreasesHtml;
+
+            // Latest Prices
+            const priceData = Array.isArray(prices.data) ? prices.data : [];
+            const pricesHtml = priceData.length ? `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Country</th>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${priceData.map(item => `
+                                <tr>
+                                    <td>${item.country || 'N/A'}</td>
+                                    <td>${item.product_type || 'N/A'}</td>
+                                    <td>${formatPrice(item.price, item.currency)}</td>
+                                    <td>${formatDate(item.reporting_date)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            ` : '<div class="loading">No price data available</div>';
+            document.getElementById('pricesContent').innerHTML = pricesHtml;
+        }
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+
+        // Auto-refresh every 5 minutes
+        setInterval(loadDashboard, 300000);
+    </script>
+</body>
+
+</html>

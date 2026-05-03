@@ -1,0 +1,36 @@
+energy_data_platform/
+├── airflow/dags/energy_pipeline_dag.py    # Airflow DAG
+├── app/
+│   ├── ingestion/                          # Data fetchers
+│   │   ├── base_fetcher.py
+│   │   ├── xml_fetcher.py
+│   │   ├── excel_fetcher.py
+│   │   └── fetcher_factory.py
+│   ├── validation/                         # Data validators
+│   │   └── validators.py
+│   ├── transformation/                     # Data transformers
+│   │   └── transformers.py
+│   ├── loaders/                            # MongoDB loaders
+│   │   └── mongo_loader.py
+│   ├── services/                           # Business logic
+│   │   └── reporting_service.py
+│   └── utils/                              # Utilities
+│       ├── logger.py
+│       ├── date_utils.py
+│       ├── mongo_client.py
+│       └── models.py
+├── flask_app/                              # Web application
+│   ├── routes/
+│   │   ├── api_routes.py
+│   │   └── dashboard_routes.py
+│   ├── templates/
+│   │   └── dashboard.html
+│   ├── static/
+│   └── app.py
+├── config/
+│   └── settings.py                         # Configuration
+├── tests/                                  # Test suite
+├── docker-compose.yml
+├── requirements.txt
+├── .env.example
+└── README.md

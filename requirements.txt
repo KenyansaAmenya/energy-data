@@ -1,0 +1,37 @@
+# Core
+pymongo
+python-dotenv
+requests
+pandas
+python-dateutil
+
+# XML Parsing
+lxml
+
+# Excel Handling
+openpyxl
+
+# Flask
+Flask
+Flask-CORS
+Jinja2
+
+# Airflow
+apache-airflow
+apache-airflow-providers-mongo
+
+# Testing
+pytest
+pytest-mongodb
+pytest-flask
+mongomock
+responses
+
+# Logging
+python-json-logger
+
+# Data Validation
+pydantic
+
+# Utilities
+tenacity

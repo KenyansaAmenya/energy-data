@@ -1,0 +1,20 @@
+# Ignore everything on root except what's needed
+/*
+!api
+!flask_app
+!app
+!config
+!requirements.txt
+!vercel.json
+
+# Exclude development and cache files
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.git/
+logs/
+airflow/
+tests/
+pytest
