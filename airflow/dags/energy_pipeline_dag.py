@@ -56,7 +56,6 @@ def create_dag():
     )
     
     def ingest_data_task(**context: Any) -> Dict[str, Any]:
-        """Ingest data from OilPriceAPI."""
         config = get_config()
         batch_id = generate_batch_id()
         execution_type = context["params"].get("execution_type", "incremental")
@@ -123,7 +122,6 @@ def create_dag():
             logger.error("No raw records ingested", batch_id=batch_id)
             raise AirflowFailException(f"No data ingested for batch {batch_id}")
         
-        # Push batch_id to XCom with multiple methods for reliability
         context["ti"].xcom_push(key="batch_id", value=batch_id)
         context["ti"].xcom_push(key="ingestion_stats", value=ingestion_stats)
         context["ti"].xcom_push(key="raw_count", value=len(all_raw_records))
@@ -142,20 +140,16 @@ def create_dag():
         }
     
     def transform_data_task(**context: Any) -> Dict[str, Any]:
-        """Transform data from OilPriceAPI."""
         config = get_config()
         
-        # TRY MULTIPLE WAYS TO GET BATCH_ID
         batch_id = context["ti"].xcom_pull(task_ids="ingest_data", key="batch_id")
         
         if not batch_id:
-            # Try getting from the return value
             ingest_result = context["ti"].xcom_pull(task_ids="ingest_data")
             if ingest_result:
                 batch_id = ingest_result.get("batch_id")
         
         if not batch_id:
-            # Fallback: get the most recent batch from MongoDB
             db = get_mongo_db(config.mongo)
             raw_collection = db[config.mongo.raw_collection]
             latest_raw = raw_collection.find_one(sort=[("ingestion_timestamp", -1)])
@@ -168,8 +162,7 @@ def create_dag():
         logger.info("Starting data transformation", batch_id=batch_id, run_id=context["run_id"])
         
         db = get_mongo_db(config.mongo)
-        
-        # Get raw documents for this batch
+    
         raw_collection = db[config.mongo.raw_collection]
         raw_docs = list(raw_collection.find({"batch_id": batch_id}))
         
@@ -183,7 +176,6 @@ def create_dag():
         if not raw_docs:
             raise AirflowFailException(f"No raw data found for batch {batch_id}")
         
-        # Parse raw documents
         all_records = []
         fetcher = OilPriceFetcher(config.api, config.pipeline)
         
@@ -197,7 +189,6 @@ def create_dag():
             logger.warning("No records parsed from raw data", batch_id=batch_id)
             return {"batch_id": batch_id, "transformed_count": 0}
         
-        # Transform records by product type
         transformed_by_product: Dict[str, List[Dict]] = {}
         
         for record in all_records:
@@ -234,10 +225,8 @@ def create_dag():
         }
     
     def load_to_mongodb_task(**context: Any) -> Dict[str, Any]:
-        """Load transformed data to MongoDB."""
         config = get_config()
         
-        # Try multiple ways to get batch_id
         batch_id = context["ti"].xcom_pull(task_ids="transform_data", key="batch_id")
         
         if not batch_id:
@@ -246,7 +235,6 @@ def create_dag():
                 batch_id = ingest_result.get("batch_id")
         
         if not batch_id:
-            # Fallback: get the most recent batch from MongoDB
             db = get_mongo_db(config.mongo)
             raw_collection = db[config.mongo.raw_collection]
             latest_raw = raw_collection.find_one(sort=[("ingestion_timestamp", -1)])
@@ -296,7 +284,6 @@ def create_dag():
                     "error": str(e)
                 })
         
-        # Update pipeline run status
         run = PipelineRun(
             batch_id=batch_id,
             status="success" if total_loaded > 0 else "failed",
@@ -325,7 +312,6 @@ def create_dag():
         """Generate reports from data."""
         config = get_config()
         
-        # Try multiple ways to get batch_id
         batch_id = context["ti"].xcom_pull(task_ids="load_to_mongodb", key="batch_id")
         
         if not batch_id:
@@ -334,7 +320,6 @@ def create_dag():
                 batch_id = ingest_result.get("batch_id")
         
         if not batch_id:
-            # Fallback: get the most recent batch from MongoDB
             db = get_mongo_db(config.mongo)
             raw_collection = db[config.mongo.raw_collection]
             latest_raw = raw_collection.find_one(sort=[("ingestion_timestamp", -1)])
@@ -400,7 +385,6 @@ def create_dag():
         dag=dag
     )
     
-    # Task dependencies (validation removed)
     ingest_data >> transform_data >> load_to_mongodb >> generate_report
     
     return dag
