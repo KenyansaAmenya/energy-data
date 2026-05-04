@@ -28,7 +28,6 @@ class ExcelFetcher(BaseDataFetcher):
             )    
             response.raise_for_status()
 
-            # FIX: Decode bytes to str for RawAPIData
             raw_content = response.content
             if isinstance(raw_content, bytes):
                 try:
@@ -41,7 +40,7 @@ class ExcelFetcher(BaseDataFetcher):
             raw_data = RawAPIData(
                 batch_id=batch_id,
                 source_url=source_url,
-                raw_content=raw_content_str,  # FIX: RawAPIData expects str
+                raw_content=raw_content_str,  
                 format_type="excel",
                 ingestion_timestamp=utc_now(),
                 metadata={
