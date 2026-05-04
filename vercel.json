@@ -9,5 +9,10 @@
             "source": "/(.*)",
             "destination": "/api/index"
         }
-    ]
+    ],
+    "build": {
+        "env": {
+            "REQUIREMENTS_FILE": "requirements-vercel.txt"
+        }
+    }
 }

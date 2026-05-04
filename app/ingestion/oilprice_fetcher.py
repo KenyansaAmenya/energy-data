@@ -18,7 +18,6 @@ class OilPriceFetcher(BaseDataFetcher):
         self.pipeline_config = pipeline_config
 
     def _get_headers(self) -> Dict[str, str]:
-        """OilPriceAPI uses 'Authorization: Token' header."""
         return {
             "Authorization": f"Token {self.config.oilprice_api_key}",
             "Content-Type": "application/json"
@@ -31,7 +30,6 @@ class OilPriceFetcher(BaseDataFetcher):
         reraise=True
     )
     def _make_request(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Make request to OilPriceAPI. Endpoint should start with /"""
         url = f"{self.config.oilprice_base_url.rstrip('/')}{endpoint}"
 
         self.logger.info(
@@ -56,7 +54,6 @@ class OilPriceFetcher(BaseDataFetcher):
         end_date: Optional[datetime] = None,
         **kwargs: Any
     ) -> List[RawAPIData]:
-        """Fetch price data from OilPriceAPI for specified product type."""
         batch_id = generate_batch_id()
         
         commodity_codes = self._get_commodity_codes(product_type)
@@ -64,7 +61,6 @@ class OilPriceFetcher(BaseDataFetcher):
         
         for code in commodity_codes:
             try:
-                # IMPORTANT: Use 'by_code' parameter (this is the correct parameter name!)
                 params = {
                     "by_code": code
                 }
@@ -111,7 +107,6 @@ class OilPriceFetcher(BaseDataFetcher):
         return all_raw_records
 
     def _get_commodity_codes(self, product_type: ProductType) -> List[str]:
-        """Map internal product types to OilPriceAPI commodity codes."""
         mapping = {
             ProductType.FUEL: ["WTI_USD", "BRENT_CRUDE_USD"],
             ProductType.NATURAL_GAS: ["NATURAL_GAS_USD"],
@@ -120,7 +115,6 @@ class OilPriceFetcher(BaseDataFetcher):
         return mapping.get(product_type, ["WTI_USD"])
 
     def parse(self, raw_data: RawAPIData) -> List[Dict[str, Any]]:
-        """Parse OilPriceAPI response into standardized records."""
         try:
             data = json.loads(raw_data.raw_content)
             records = []
@@ -128,11 +122,9 @@ class OilPriceFetcher(BaseDataFetcher):
             product_type = raw_data.metadata.get("product_type")
             commodity_code = raw_data.metadata.get("commodity_code")
 
-            # Check response structure
             if data.get("status") == "success" and "data" in data:
                 price_data = data["data"]
-                
-                # Handle both dict and list responses
+            
                 if isinstance(price_data, dict) and "price" in price_data:
                     record = self._parse_single_price(price_data, product_type, commodity_code)
                     if record:
@@ -170,7 +162,6 @@ class OilPriceFetcher(BaseDataFetcher):
         product_type: str,
         commodity_code: str
     ) -> Optional[Dict[str, Any]]:
-        """Parse individual price record into standard format."""
         try:
             price_value = item.get("price")
             if price_value is None:
@@ -181,10 +172,8 @@ class OilPriceFetcher(BaseDataFetcher):
             if not mapped_product:
                 mapped_product = product_type if product_type else "fuel"
 
-            # Get timestamp - try multiple possible field names
             timestamp = item.get("created_at") or item.get("updated_at") or item.get("timestamp") or utc_now().isoformat()
             
-            # Extract date part for reporting_date
             if "T" in timestamp:
                 reporting_date = timestamp.split("T")[0]
             else:
@@ -208,7 +197,6 @@ class OilPriceFetcher(BaseDataFetcher):
             return None
 
     def _map_commodity_to_product(self, commodity_code: str) -> tuple:
-        """Map OilPriceAPI commodity code to internal product type and unit."""
         fuel_codes = {
             "WTI_USD": ("fuel", "per_barrel"),
             "BRENT_CRUDE_USD": ("fuel", "per_barrel"),
@@ -224,9 +212,7 @@ class OilPriceFetcher(BaseDataFetcher):
         return (None, "per_unit")
 
     def validate_source(self) -> bool:
-        """Validate OilPriceAPI connectivity and API key."""
         try:
-            # Use 'by_code' parameter for validation
             response = self._make_request("/prices/latest", params={"by_code": "WTI_USD"})
             return response.get("status") == "success" and "data" in response
         except Exception as e:
