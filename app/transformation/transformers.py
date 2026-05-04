@@ -34,8 +34,6 @@ class CountryNormalizer(BaseTransformer):
             record["country"] = normalized
         return record
 
-
-# FIX: Added missing PriceNormalizer class
 class PriceNormalizer(BaseTransformer):
     def __init__(self):
         super().__init__("PriceNormalizer")

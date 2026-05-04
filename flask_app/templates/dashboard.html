@@ -204,7 +204,7 @@
     <div class="container">
         <header>
             <h1>🌍 Global Energy Price Dashboard</h1>
-            <p class="subtitle">Real-time monitoring of global fuel, electricity, and natural gas prices</p>
+            <p class="subtitle">Real-time monitoring of global fuel, and natural gas prices</p>
         </header>
 
         <div class="status-bar" id="statusBar">
@@ -349,7 +349,6 @@
                     ? data.total_records_processed_24h
                     : 0;
 
-            // Summary
             const summaryHtml = `
                 <div class="metric">${data.total_records_processed_24h !== null && data.total_records_processed_24h !== undefined ? data.total_records_processed_24h : 0}</div>
                 <div class="metric-label">Records Processed (24h)</div>
@@ -373,7 +372,6 @@
             `;
             document.getElementById('summaryContent').innerHTML = summaryHtml;
 
-            // Top Increases
             const increases = safeGet(changes, 'data.top_increases', []);
             const increasesHtml = Array.isArray(increases) && increases.length ? `
                 <div class="table-container">
@@ -399,7 +397,6 @@
             ` : '<div class="loading">No increases in last 24h</div>';
             document.getElementById('increasesContent').innerHTML = increasesHtml;
 
-            // Top Decreases
             const decreases = safeGet(changes, 'data.top_decreases', []);
             const decreasesHtml = Array.isArray(decreases) && decreases.length ? `
                 <div class="table-container">
@@ -454,7 +451,6 @@
             document.getElementById('pricesContent').innerHTML = pricesHtml;
         }
 
-        // Load on page load
         document.addEventListener('DOMContentLoaded', loadDashboard);
 
         // Auto-refresh every 5 minutes

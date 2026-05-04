@@ -31,7 +31,6 @@ class MongoConfig:
 
 @dataclass(frozen=True)
 class APIConfig:
-    """OilPriceAPI configuration settings."""
     oilprice_api_key: str
     oilprice_base_url: str
     oilprice_request_timeout: int

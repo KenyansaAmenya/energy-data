@@ -30,7 +30,7 @@ class EnergyPriceRecord(BaseModel):
         return v.strip().title()
 
     class Config:
-        json_encoders = {  # FIX: json_encorders → json_encoders
+        json_encoders = {  # FIX: 
             datetime: lambda v: v.isoformat()
         }    
 
